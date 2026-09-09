@@ -179,7 +179,17 @@ QtObject {
 
   function start() {
     if (!root.dataDir) return
-    ensureDirsProc.running = true
+    // Deferred: dataDir is set from an async callback (Main.qml's config
+    // FileView.onLoaded), and reading the derived root.archiveDir binding
+    // synchronously within that same tick can observe a stale
+    // not-yet-recomputed value, producing a `mkdir -p <dataDir> <stale>`
+    // command that fails to create the archive directory. Qt.callLater
+    // pushes the run to the next event-loop turn, by which point QML has
+    // settled every dependent binding, so the Process's `command` array
+    // reads the correct, final dataDir/archiveDir pair.
+    Qt.callLater(function() {
+      ensureDirsProc.running = true
+    })
   }
 
   onDataDirChanged: start()
