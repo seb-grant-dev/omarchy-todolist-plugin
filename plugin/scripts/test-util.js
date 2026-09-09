@@ -47,4 +47,32 @@ function run() {
   console.log("test-util: all assertions passed")
 }
 
+function testRecentCompleted() {
+  const now = new Date(2026, 8, 9, 12, 0, 0) // 2026-09-09 noon, local
+
+  const fresh = { id: "a", completedAt: new Date(2026, 8, 9, 9, 0, 0).toISOString() }
+  const older = { id: "b", completedAt: new Date(2026, 8, 5, 9, 0, 0).toISOString() }
+  const stale = { id: "c", completedAt: new Date(2026, 8, 1, 9, 0, 0).toISOString() } // >7 days before now
+  const noTimestamp = { id: "d", completedAt: null }
+
+  // Filters out anything older than the cutoff, and anything with no completedAt
+  const result = Util.recentCompleted([fresh, older, stale, noTimestamp], now, 7)
+  assert.deepStrictEqual(result.map(function(t) { return t.id }), ["a", "b"])
+
+  // Sorts newest-first
+  const unsorted = Util.recentCompleted([older, fresh], now, 7)
+  assert.deepStrictEqual(unsorted.map(function(t) { return t.id }), ["a", "b"])
+
+  // Boundary: exactly `days` ago is included
+  const exactlyAtCutoff = { id: "e", completedAt: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString() }
+  const boundary = Util.recentCompleted([exactlyAtCutoff], now, 7)
+  assert.deepStrictEqual(boundary.map(function(t) { return t.id }), ["e"])
+
+  // Empty input -> empty output
+  assert.deepStrictEqual(Util.recentCompleted([], now, 7), [])
+
+  console.log("test-util: recentCompleted assertions passed")
+}
+
 run()
+testRecentCompleted()

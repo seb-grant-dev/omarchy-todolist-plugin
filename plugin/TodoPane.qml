@@ -112,5 +112,7 @@ Item {
     TodoSection { title: "This Week"; tasks: root.store ? root.store.thisWeekTasks : []; store: root.store }
     TodoSection { title: "This Month"; tasks: root.store ? root.store.thisMonthTasks : []; store: root.store }
     TodoSection { title: "Someday"; tasks: root.store ? root.store.somedayTasks : []; store: root.store }
+
+    CompletedSection { tasks: root.store ? root.store.recentCompletedTasks : []; store: root.store }
   }
 }

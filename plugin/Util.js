@@ -44,6 +44,13 @@ function bucketFor(dueDateStr, today) {
   return "someday"
 }
 
+function recentCompleted(tasks, now, days) {
+  var cutoff = now.getTime() - days * 24 * 60 * 60 * 1000
+  return tasks
+    .filter(function(t) { return t.completedAt && new Date(t.completedAt).getTime() >= cutoff })
+    .sort(function(a, b) { return new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime() })
+}
+
 if (typeof module !== "undefined") {
   module.exports = {
     toISODate: toISODate,
@@ -51,6 +58,7 @@ if (typeof module !== "undefined") {
     startOfISOWeek: startOfISOWeek,
     endOfISOWeek: endOfISOWeek,
     endOfMonth: endOfMonth,
-    bucketFor: bucketFor
+    bucketFor: bucketFor,
+    recentCompleted: recentCompleted
   }
 }

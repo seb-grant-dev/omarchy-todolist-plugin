@@ -11,7 +11,10 @@ QtObject {
   property var thisWeekTasks: []
   property var thisMonthTasks: []
   property var somedayTasks: []
+  property var recentCompletedTasks: []
   property bool loaded: false
+
+  readonly property int recentCompletedWindowDays: 7
 
   property int _pendingBucketLoads: 4
   property string _loadedArchiveMonthKey: ""
@@ -113,6 +116,23 @@ QtObject {
     rolloverAndWrite(remaining)
   }
 
+  // Reverses completeTask(): only ever offered for tasks in
+  // recentCompletedTasks, which is itself derived from _archiveCache, so the
+  // task is guaranteed to be in the currently-loaded archive month.
+  function uncompleteTask(taskId) {
+    if (!root.loaded || !root._archiveLoaded) return
+    var idx = -1
+    for (var i = 0; i < root._archiveCache.length; i++) {
+      if (root._archiveCache[i].id === taskId) { idx = i; break }
+    }
+    if (idx === -1) return
+    var task = root._archiveCache[idx]
+    root._archiveCache = root._archiveCache.slice(0, idx).concat(root._archiveCache.slice(idx + 1))
+    archiveFile.setText(JSON.stringify(root._archiveCache, null, 2) + "\n")
+    task.completedAt = null
+    rolloverAndWrite(allOpenTasks().concat([task]))
+  }
+
   // skipBuckets (optional) maps bucket keys ("today"/"thisweek"/"thismonth"/
   // "someday") to true for buckets whose on-disk file must NOT be rewritten
   // on this call. Only ever passed by _maybeFinishLoading(), for the very
@@ -146,7 +166,12 @@ QtObject {
     if (!skip.thisweek) weekFile.setText(JSON.stringify(buckets.thisweek, null, 2) + "\n")
     if (!skip.thismonth) monthFile.setText(JSON.stringify(buckets.thismonth, null, 2) + "\n")
     if (!skip.someday) somedayFile.setText(JSON.stringify(buckets.someday, null, 2) + "\n")
+    root._recomputeRecentCompleted()
     root.tasksChanged()
+  }
+
+  function _recomputeRecentCompleted() {
+    root.recentCompletedTasks = Util.recentCompleted(root._archiveCache, new Date(), root.recentCompletedWindowDays)
   }
 
   function ensureArchiveLoadedForToday() {
@@ -298,8 +323,8 @@ QtObject {
     watchChanges: false
     atomicWrites: true
     printErrors: false
-    onLoaded: { root._archiveCache = root.parseList(text()); root._archiveLoaded = true }
-    onLoadFailed: { root._archiveCache = []; root._archiveLoaded = true }
+    onLoaded: { root._archiveCache = root.parseList(text()); root._archiveLoaded = true; root._recomputeRecentCompleted() }
+    onLoadFailed: { root._archiveCache = []; root._archiveLoaded = true; root._recomputeRecentCompleted() }
     onSaveFailed: (error) => console.warn("sebastiangrant.dashboard: failed to save archive file: "
       + FileViewError.toString(error))
   }
