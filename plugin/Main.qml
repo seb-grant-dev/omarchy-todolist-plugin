@@ -35,6 +35,11 @@ Item {
   }
 
   function applyConfig(parsed) {
+    if (parsed && parsed.mode !== undefined && parsed.mode !== "docked" && parsed.mode !== "floating") {
+      console.warn("sebastiangrant.dashboard: config.json has unrecognized mode '" + parsed.mode
+        + "', expected \"docked\" or \"floating\" — only \"docked\" is checked explicitly, so this"
+        + " will behave as floating")
+    }
     var merged = {
       monitor: (parsed && parsed.monitor) || "",
       mode: (parsed && parsed.mode) || "floating",
@@ -91,10 +96,18 @@ Item {
     onTriggered: {
       todoStore.rollover()
       todoStore.ensureArchiveLoadedForToday()
+      for (var i = 0; i < calendarPanes.length; i++) calendarPanes[i].refreshToday()
       interval = 24 * 60 * 60 * 1000
       restart()
     }
   }
+
+  // One CalendarPane is instantiated per targeted screen (see the Variants
+  // below); collect them so the midnight timer above can push a fresh
+  // "today" into every instance's todayISO (see CalendarPane.qml's isToday
+  // fix — a plain `new Date()` in a delegate binding is evaluated once at
+  // creation and would otherwise go stale every night).
+  property var calendarPanes: []
 
   IpcHandler {
     target: "sebastiangrant.dashboard"
@@ -134,6 +147,7 @@ Item {
           spacing: Style.space(20)
 
           CalendarPane {
+            id: calendarPane
             width: parent.width
             icsFiles: {
               var list = []
@@ -142,6 +156,8 @@ Item {
               }
               return list
             }
+            Component.onCompleted: root.calendarPanes = root.calendarPanes.concat([calendarPane])
+            Component.onDestruction: root.calendarPanes = root.calendarPanes.filter(function(p) { return p !== calendarPane })
           }
 
           TodoPane {

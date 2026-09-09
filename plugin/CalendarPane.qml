@@ -21,8 +21,19 @@ Item {
   property var viewMonth: new Date().getMonth()
   property var viewYear: new Date().getFullYear()
   property string selectedDate: DateUtil.toISODate(new Date())
+  // Reactive "today" marker. isToday below binds to this instead of calling
+  // `new Date()` directly, since a plain call is evaluated once at delegate
+  // creation and never again — Main.qml's midnight Timer updates this
+  // property once a day (and it's set once at startup) so the "today"
+  // highlight doesn't silently point at yesterday until something else
+  // happens to rebuild the grid's delegates.
+  property string todayISO: DateUtil.toISODate(new Date())
 
   implicitHeight: column.implicitHeight
+
+  function refreshToday() {
+    root.todayISO = DateUtil.toISODate(new Date())
+  }
 
   function mergeIcsEvents(sourcePath, events) {
     var bySource = {}
@@ -51,7 +62,10 @@ Item {
       watchChanges: true
       printErrors: false
       onLoaded: root.mergeIcsEvents(modelData, IcsParser.parse(text()))
-      onLoadFailed: root.mergeIcsEvents(modelData, [])
+      onLoadFailed: {
+        console.warn("sebastiangrant.dashboard: could not read .ics file, skipping: " + modelData)
+        root.mergeIcsEvents(modelData, [])
+      }
     }
   }
 
@@ -123,7 +137,7 @@ Item {
           radius: Style.cornerRadius
           property string dateStr: DateUtil.toISODate(modelData)
           property bool inMonth: modelData.getMonth() === root.viewMonth
-          property bool isToday: dateStr === DateUtil.toISODate(new Date())
+          property bool isToday: dateStr === root.todayISO
           property bool hasEvents: !!root.eventsByDate[dateStr] && root.eventsByDate[dateStr].length > 0
           color: dateStr === root.selectedDate ? Color.accent
             : (isToday ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : "transparent")
