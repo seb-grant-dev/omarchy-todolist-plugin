@@ -13,6 +13,8 @@ Edit `plugin/config.json`:
 
 - `monitor`: exact output name from `hyprctl monitors -j` (the `name` field).
 - `mode`: `"docked"` (reserves screen space) or `"floating"` (overlay).
+- `width`: panel width in pixels (the panel always spans the full height of
+  the target monitor; only the width is configurable).
 - `dataDir`: where todo JSON files live — point this at a Git/iCloud/Drive
   synced folder to share your list across machines yourself; the plugin
   does no syncing on its own.
@@ -32,7 +34,17 @@ Then `omarchy restart shell`.
     omarchy-shell sebastiangrant.dashboard toggleMode
 
 Bind this to a key in `~/.config/hypr/bindings.lua` for one-key toggling.
-This repo binds it to `SUPER + T`.
+This repo binds it to `SUPER + T`. **Note:** `SUPER + T` is Omarchy's stock
+binding for "toggle window floating/tiling"; binding it here replaces that
+default, so the deployed system unbinds the stock action first. The actual
+snippet added to `~/.config/hypr/bindings.lua`:
+
+```lua
+-- Dashboard plugin
+-- Unbind existing SUPER+T (was: toggle window floating/tiling)
+hl.unbind("SUPER + T")
+o.bind("SUPER + T","Toggle dashboard docked/floating","omarchy-shell sebastiangrant.dashboard toggleMode")
+```
 
 ## Data layout
 
@@ -42,6 +54,24 @@ This repo binds it to `SUPER + T`.
     <dataDir>/someday.json     # no due date, or due beyond this month
     <dataDir>/archive/YYYY-MM.json   # completed tasks, by completion month
 
+## Behavioral notes
+
+- The panel uses `WlrKeyboardFocus.OnDemand`, so clicking a checkbox,
+  calendar day, or text field can steal keyboard focus away from whatever
+  window you were previously typing in. Focus returns to normal once you
+  click back into another window.
+- The panel uses `WlrLayer.Top`, so in floating mode it paints over
+  fullscreen windows (video players, games, etc.) with no auto-hide —
+  there's no way to make it temporarily get out of the way short of
+  toggling to a different monitor or removing the plugin.
+
+## Tests
+
+Two standalone Node test harnesses (no Quickshell/QML runtime needed):
+
+    node plugin/scripts/test-util.js          # due-date bucketing logic
+    node plugin/scripts/test-ics-parser.js    # minimal .ics VEVENT parser
+
 ## Known v1 limitations
 
 - No git/cloud sync built in — point `dataDir` at an already-synced folder.
@@ -49,8 +79,23 @@ This repo binds it to `SUPER + T`.
 - No recurring-event expansion — only non-recurring events show.
 - No file locking — last write wins if you edit files externally while
   the shell is also writing.
-- `config.json` does not hot-reload on the real deployed shell:
-  `omarchy-launch-shell` sets `QS_DISABLE_FILE_WATCHER=1`, which disables
-  the file watcher that would otherwise pick up changes automatically.
-  After editing `plugin/config.json`, run `omarchy restart shell` for the
-  change to take effect.
+- No way to edit a task's due date once set — only delete and re-add it.
+  `TodoStore.qml`'s `editDueDate` function exists and works, but v1 has no
+  UI control that calls it.
+- **Nothing hot-reloads on the real deployed shell, and this can silently
+  discard external changes.** `omarchy-launch-shell` sets
+  `QS_DISABLE_FILE_WATCHER=1`, which disables Quickshell's file watcher
+  shell-wide — not just for `config.json`. This equally affects the four
+  bucket JSON files and any configured `.ics` file: if you sync in a
+  change from another machine (via your `dataDir` sync mechanism) while
+  the shell is already running, the plugin won't notice until
+  `omarchy restart shell`. More importantly, the plugin still holds its
+  last-loaded copy of the bucket files in memory — so the *next* local
+  edit you make (checking off a task, adding one, anything that triggers
+  a write) will overwrite the on-disk file with that stale in-memory
+  copy, **silently discarding whatever arrived externally**, with no
+  warning. If you edit `dataDir` files or `.ics` files from elsewhere
+  while the shell is running, run `omarchy restart shell` afterward
+  before touching the plugin again. The same applies to `config.json`:
+  after editing it, run `omarchy restart shell` for the change to take
+  effect.
