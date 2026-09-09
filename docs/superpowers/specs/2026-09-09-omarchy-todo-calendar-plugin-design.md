@@ -117,9 +117,12 @@ so edits apply live without a shell restart:
 ### Docked vs. floating
 
 - **Docked**: `WlrLayershell.layer: WlrLayer.Top`,
-  `exclusionMode: ExclusionMode.Exclusive`, anchored `right`/`top`/`bottom`.
-  Hyprland treats the reserved strip like the bar's reserved area —
-  tiled windows shrink to avoid it.
+  `exclusionMode: ExclusionMode.Auto`, anchored `right`/`top`/`bottom`.
+  `Auto` reserves a strip equal to the panel's width along its anchored
+  edge — the same mechanism the built-in bar uses — so Hyprland shrinks
+  tiled windows to avoid it. (`ExclusionMode` only has `Normal`,
+  `Ignore`, `Auto` — confirmed against the installed
+  `quickshell-window.qmltypes`; there is no `Exclusive` value.)
 - **Floating**: same anchors, `exclusionMode: ExclusionMode.Ignore`.
   Windows can go edge-to-edge underneath it.
 
