@@ -1,0 +1,7 @@
+{
+  "monitor": "HDMI-A-1",
+  "mode": "floating",
+  "width": 340,
+  "dataDir": "~/.local/share/sebastiangrant.dashboard",
+  "icsFiles": []
+}

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "sebastiangrant.dashboard",
+  "name": "Todo + Calendar",
+  "version": "1.0.0",
+  "author": "sebastiangrant",
+  "description": "Persistent todo list and calendar docked/floating on a monitor",
+  "kinds": ["service"],
+  "entryPoints": { "service": "Main.qml" }
+}
