@@ -56,6 +56,7 @@ QtObject {
   // ---------------------------------------------------------- public API
 
   function addTask(text, dueDate, notes) {
+    if (!root.loaded) return
     var task = {
       id: newTaskId(),
       text: String(text || "").trim(),
@@ -69,6 +70,7 @@ QtObject {
   }
 
   function editDueDate(taskId, dueDate) {
+    if (!root.loaded) return
     var all = allOpenTasks()
     for (var i = 0; i < all.length; i++) {
       if (all[i].id === taskId) { all[i].dueDate = dueDate || null; break }
@@ -77,10 +79,12 @@ QtObject {
   }
 
   function removeTask(taskId) {
+    if (!root.loaded) return
     rolloverAndWrite(allOpenTasks().filter(function(t) { return t.id !== taskId }))
   }
 
   function completeTask(taskId) {
+    if (!root.loaded) return
     var all = allOpenTasks()
     var remaining = []
     var completed = null
