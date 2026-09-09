@@ -10,7 +10,11 @@ Item {
   implicitHeight: column.implicitHeight
 
   function doAdd() {
-    if (!root.store) return
+    // Guard on store.loaded too (not just root.store being non-null):
+    // TodoStore.addTask() itself no-ops before startup finishes, and
+    // clearing the fields unconditionally in that window would silently
+    // discard whatever the user typed with zero feedback.
+    if (!root.store || !root.store.loaded) return
     root.store.addTask(addField.text, dueField.text.trim() || null, "")
     addField.text = ""
     dueField.text = ""
