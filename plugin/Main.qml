@@ -118,7 +118,7 @@ Item {
 
       WlrLayershell.namespace: "sebastiangrant-dashboard"
       WlrLayershell.layer: WlrLayer.Top
-      WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+      WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
       exclusionMode: root.mode === "docked" ? ExclusionMode.Auto : ExclusionMode.Ignore
 
       Flickable {
