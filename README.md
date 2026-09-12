@@ -1,6 +1,6 @@
 # Todo + Calendar (Omarchy plugin)
 
-Persistent todo list and calendar, docked or floating on a chosen
+Persistent todo list and calendar, docked, floating, or hidden on a chosen
 monitor. See `docs/superpowers/specs/2026-09-09-omarchy-todo-calendar-plugin-design.md`
 for the full design.
 
@@ -12,7 +12,8 @@ for the full design.
 Edit `plugin/config.json`:
 
 - `monitor`: exact output name from `hyprctl monitors -j` (the `name` field).
-- `mode`: `"docked"` (reserves screen space) or `"floating"` (overlay).
+- `mode`: `"docked"` (reserves screen space), `"floating"` (overlay), or
+  `"hidden"` (panel is not shown).
 - `width`: panel width in pixels (the panel always spans the full height of
   the target monitor; only the width is configurable).
 - `dataDir`: where todo JSON files live — point this at a Git/iCloud/Drive
@@ -29,11 +30,14 @@ Enable it in `~/.config/omarchy/shell.json`:
 
 Then `omarchy restart shell`.
 
-## Toggling docked/floating live
+## Cycling docked/floating/hidden live
 
     omarchy-shell sebastiangrant.dashboard toggleMode
 
-Bind this to a key in `~/.config/hypr/bindings.lua` for one-key toggling.
+Each call advances to the next mode in order: docked → floating → hidden →
+docked → ...
+
+Bind this to a key in `~/.config/hypr/bindings.lua` for one-key cycling.
 This repo binds it to `SUPER + T`. **Note:** `SUPER + T` is Omarchy's stock
 binding for "toggle window floating/tiling"; binding it here replaces that
 default, so the deployed system unbinds the stock action first. The actual
@@ -43,7 +47,7 @@ snippet added to `~/.config/hypr/bindings.lua`:
 -- Dashboard plugin
 -- Unbind existing SUPER+T (was: toggle window floating/tiling)
 hl.unbind("SUPER + T")
-o.bind("SUPER + T","Toggle dashboard docked/floating","omarchy-shell sebastiangrant.dashboard toggleMode")
+o.bind("SUPER + T","Cycle dashboard docked/floating/hidden","omarchy-shell sebastiangrant.dashboard toggleMode")
 ```
 
 ## Data layout

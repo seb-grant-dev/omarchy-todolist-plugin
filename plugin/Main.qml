@@ -34,11 +34,13 @@ Item {
     return s
   }
 
+  readonly property var modeCycle: ["docked", "floating", "hidden"]
+
   function applyConfig(parsed) {
-    if (parsed && parsed.mode !== undefined && parsed.mode !== "docked" && parsed.mode !== "floating") {
+    if (parsed && parsed.mode !== undefined && root.modeCycle.indexOf(parsed.mode) === -1) {
       console.warn("sebastiangrant.dashboard: config.json has unrecognized mode '" + parsed.mode
-        + "', expected \"docked\" or \"floating\" — only \"docked\" is checked explicitly, so this"
-        + " will behave as floating")
+        + "', expected \"docked\", \"floating\" or \"hidden\" — only \"docked\" is checked explicitly,"
+        + " so this will behave as floating")
     }
     var merged = {
       monitor: (parsed && parsed.monitor) || "",
@@ -113,7 +115,8 @@ Item {
     target: "sebastiangrant.dashboard"
 
     function toggleMode(): void {
-      root.mode = root.mode === "docked" ? "floating" : "docked"
+      var idx = root.modeCycle.indexOf(root.mode)
+      root.mode = root.modeCycle[(idx + 1) % root.modeCycle.length]
     }
   }
 
@@ -128,6 +131,7 @@ Item {
       anchors { top: true; bottom: true; right: true }
       implicitWidth: root.config.width
       color: Color.background
+      visible: root.mode !== "hidden"
 
       WlrLayershell.namespace: "sebastiangrant-dashboard"
       WlrLayershell.layer: WlrLayer.Top
