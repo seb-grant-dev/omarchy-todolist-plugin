@@ -8,15 +8,11 @@ Item {
   id: root
 
   // Injected by shell.qml's ensureService() for every "service"-kind
-  // plugin instance (see PluginRegistry / shell.qml ensureService, read
-  // during design); manifest.__sourceDir is the plugin's own directory,
-  // stamped on by PluginRegistry when it scans manifest.json. Declaring
-  // the property is enough for the host to fill it in — no explicit
-  // wiring needed on this end.
+  // plugin instance. Declaring the property is enough for the host to fill
+  // it in — no explicit wiring needed on this end.
   property var manifest: null
 
   readonly property string home: Quickshell.env("HOME")
-  readonly property string pluginDir: (root.manifest && root.manifest.__sourceDir) || ""
 
   property var config: ({
     monitor: "",
@@ -57,9 +53,12 @@ Item {
 
   FileView {
     id: configFile
-    // Empty until `manifest` is injected; the path binding re-evaluates
-    // (and Quickshell (re)resolves the file) once pluginDir is non-empty.
-    path: root.pluginDir ? root.pluginDir + "/config.json" : ""
+    // Resolved relative to this QML file's own location, so it needs no
+    // host-provided path — the shell's publicPluginManifest() strips
+    // manifest.__sourceDir before handing the manifest to third-party
+    // plugins (it's private to PluginRegistry's own entry-point resolution),
+    // so that can no longer be used to find sibling files like this one.
+    path: Qt.resolvedUrl("config.json")
     watchChanges: true
     printErrors: false
     onLoaded: {
