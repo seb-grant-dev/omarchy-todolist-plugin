@@ -19,7 +19,9 @@ Item {
     mode: "floating",
     width: 340,
     dataDir: "~/.local/share/sebastiangrant.dashboard",
-    icsFiles: []
+    icsFiles: [],
+    gitSync: false,
+    gitSyncIntervalMinutes: 15
   })
   property string mode: "floating"
   property bool configLoaded: false
@@ -43,7 +45,9 @@ Item {
       mode: (parsed && parsed.mode) || "floating",
       width: (parsed && parsed.width) || 340,
       dataDir: (parsed && parsed.dataDir) || "~/.local/share/sebastiangrant.dashboard",
-      icsFiles: (parsed && Array.isArray(parsed.icsFiles)) ? parsed.icsFiles : []
+      icsFiles: (parsed && Array.isArray(parsed.icsFiles)) ? parsed.icsFiles : [],
+      gitSync: !!(parsed && parsed.gitSync),
+      gitSyncIntervalMinutes: (parsed && parsed.gitSyncIntervalMinutes) || 15
     }
     root.config = merged
     root.mode = merged.mode
@@ -74,6 +78,13 @@ Item {
 
   TodoStore {
     id: todoStore
+  }
+
+  GitSync {
+    id: gitSync
+    dataDir: todoStore.dataDir
+    enabled: root.config.gitSync
+    intervalMinutes: root.config.gitSyncIntervalMinutes
   }
 
   readonly property var targetScreens: {

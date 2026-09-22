@@ -3,5 +3,7 @@
   "mode": "floating",
   "width": 340,
   "dataDir": "~/.local/share/sebastiangrant.dashboard",
-  "icsFiles": []
+  "icsFiles": [],
+  "gitSync": false,
+  "gitSyncIntervalMinutes": 15
 }

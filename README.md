@@ -21,6 +21,10 @@ Edit `plugin/config.json`:
   does no syncing on its own.
 - `icsFiles`: array of local `.ics` file paths to show as calendar events
   (non-recurring events only — no RRULE expansion).
+- `gitSync`: `true` to periodically commit and push `dataDir` if it's
+  already a git repo (see "Git sync" below). Default `false`.
+- `gitSyncIntervalMinutes`: how often to run the sync, in minutes. Default
+  `15`.
 
 Enable it in `~/.config/omarchy/shell.json`:
 
@@ -58,6 +62,24 @@ o.bind("SUPER + T","Cycle dashboard docked/floating/hidden","omarchy-shell sebas
     <dataDir>/someday.json     # no due date, or due beyond this month
     <dataDir>/archive/YYYY-MM.json   # completed tasks, by completion month
 
+## Git sync
+
+Set `gitSync: true` (and optionally `gitSyncIntervalMinutes`) to have the
+plugin periodically commit and push `dataDir` on its own. Every interval,
+it:
+
+1. Does nothing if `dataDir` isn't a git repo.
+2. Stages and commits any local changes (`Auto-sync: <timestamp>`).
+3. Commits locally only (never pushes) if there's no `origin` remote.
+4. Otherwise runs `git pull --rebase` to bring in changes from other
+   machines, then `git push`. A rebase conflict aborts the rebase and
+   retries next cycle — there's no automatic conflict resolution.
+
+The plugin never runs `git init`, `git remote add`, or sets up
+credentials — create the repo, add its remote, and make sure
+non-interactive push (SSH key / credential helper) already works from a
+plain terminal before enabling this.
+
 ## Behavioral notes
 
 - The panel uses `WlrKeyboardFocus.OnDemand`, so clicking a checkbox,
@@ -78,7 +100,10 @@ Two standalone Node test harnesses (no Quickshell/QML runtime needed):
 
 ## Known v1 limitations
 
-- No git/cloud sync built in — point `dataDir` at an already-synced folder.
+- Git sync (`gitSync`) is opt-in and only commits/pushes an already-set-up
+  repo — it never creates the repo, adds a remote, or handles auth. For
+  non-git cloud sync (iCloud, Drive, etc.), point `dataDir` at an
+  already-synced folder instead.
 - No calendar event creation — `.ics` files are read-only.
 - No recurring-event expansion — only non-recurring events show.
 - No file locking — last write wins if you edit files externally while
